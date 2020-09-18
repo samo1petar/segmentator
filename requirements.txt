@@ -1,0 +1,5 @@
+tensorflow==2.1.0
+opencv-contrib-python==4.2.0.34
+imutils==0.5.3
+matplotlib==3.2.1
+setuptools==46.1.3
