@@ -2,11 +2,9 @@ import cv2
 import os
 from random import shuffle
 import tensorflow as tf
-from typing import Generator, List, Tuple, Union
+from typing import Dict, Generator, List, Tuple, Union
 from lib.tools.progress_bar import printProgressBar
 
-
-# TODO -> rewrite for detection
 
 class RecordWriter:
     def __init__(
@@ -14,7 +12,11 @@ class RecordWriter:
             data_path   : str = None,
             record_dir  : str = None,
             record_name : str = None,
+            train_set   : Dict = None,
+            test_set    : Dict = None,
             image_size  : Tuple[int, int] = (512, 512),
+            save_n_test_images : int = None,
+            save_n_train_images : int = None,
     ):
         assert os.path.exists(record_dir)
         assert record_name
@@ -23,59 +25,61 @@ class RecordWriter:
         self._record_name = record_name
         self._image_size  = image_size
 
+        self._images_path = os.path.join(data_path, 'images')
+        self._masks_path = os.path.join(data_path, 'masked_images')
+
         self._train_record = os.path.join(self._record_dir, self._record_name + '_train' + '.tfrecord')
         self._test_record  = os.path.join(self._record_dir, self._record_name + '_test' + '.tfrecord')
 
         if not os.path.exists(self._test_record):
-            test_images = [os.path.join(root, x) for root, subdir, files in os.walk(data_path) for x in files if '/test' in root]
-            shuffle(test_images)
-            self.create_record(test_images, self._test_record)
+            self.create_record(test_set, self._test_record)
 
         if not os.path.exists(self._train_record):
-            train_images = [os.path.join(root, x) for root, subdir, files in os.walk(data_path) for x in files if '/train' in root]
-            shuffle(train_images)
-            self.create_record(train_images, self._train_record)
+            self.create_record(train_set, self._train_record)
 
-    def get_next(self, images: List[str]) -> Generator[List[Union[str, str, bytes]], None, None]:
+    def get_next(self, dataset: Dict[str, Dict[str, str]]) -> Generator[List[Union[str, str, bytes]], None, None]:
 
-        for image_path in images:
+        for key in dataset:
 
-            im_name = image_path.rsplit('/', 1)[1].rsplit('.', 1)[0]
-            country = image_path.rsplit('/', 3)[1]
-            cls = classes_encode[country]
-            cls_name = country
-            image = cv2.imread(image_path, cv2.IMREAD_COLOR)
+            name = key
+
+            image = cv2.imread(dataset[key]['image'], cv2.IMREAD_COLOR)
             image = cv2.resize(image, (self._image_size[1], self._image_size[0]))
             image = cv2.imencode('.png', image)[1].tostring()
 
-            yield im_name, cls, cls_name, image
+            mask = cv2.imread(dataset[key]['mask'], cv2.IMREAD_COLOR)
+            mask = cv2.cvtColor(mask, cv2.COLOR_BGR2GRAY)
+            mask[mask > 25] = 255
+            mask[mask <= 25] = 0
+            mask = cv2.resize(mask, (self._image_size[1], self._image_size[0]))
+            mask = cv2.imencode('.png', mask)[1].tostring()
 
-    def create_record(self, images: List[str], full_record_name: str) -> None:
+            yield name, image, mask
+
+    def create_record(self, dataset: Dict[str, Dict[str, str]], full_record_name: str) -> None:
 
         print ('Creating record {}'.format(full_record_name))
 
         def write(
                 name     : str,
-                cls      : int,
-                cls_name : str,
                 image    : bytes,
+                mask     : bytes,
                 writer   : tf.compat.v1.python_io.TFRecordWriter,
         ) -> None:
             feature = {
                 'name'     : tf.train.Feature(bytes_list=tf.train.BytesList(value=[tf.compat.as_bytes(name)])),
-                'cls'      : tf.train.Feature(int64_list=tf.train.Int64List(value=[cls])),
-                'cls_name' : tf.train.Feature(bytes_list=tf.train.BytesList(value=[tf.compat.as_bytes(cls_name)])),
                 'image'    : tf.train.Feature(bytes_list=tf.train.BytesList(value=[image])),
+                'mask'     : tf.train.Feature(bytes_list=tf.train.BytesList(value=[mask])),
             }
             example = tf.train.Example(features=tf.train.Features(feature=feature))
             writer.write(example.SerializeToString())
         try:
             with tf.compat.v1.python_io.TFRecordWriter(full_record_name) as writer:
                 count = 0
-                num_iterate = len(images)
-                for name, cls, cls_name, image in self.get_next(images):
+                num_iterate = len(dataset)
+                for name, image, mask in self.get_next(dataset):
                     count += 1
-                    write(name, cls, cls_name, image, writer)
+                    write(name, image, mask, writer)
                     printProgressBar(count, num_iterate, decimals=1, length=50, suffix=' {} / {}'.format(count, num_iterate))
 
         except Exception as e:

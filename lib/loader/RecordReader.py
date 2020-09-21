@@ -3,8 +3,6 @@ import tensorflow as tf
 from typing import Generator, Tuple
 
 
-# TODO -> rewrite for detection
-
 class RecordReader:
     def __init__(
             self,
@@ -42,17 +40,16 @@ class RecordReader:
         def parse(x):
             keys_to_features = {
                 'name'     : tf.io.FixedLenFeature([], tf.string),
-                'cls'      : tf.io.FixedLenFeature([], tf.int64),
-                'cls_name' : tf.io.FixedLenFeature([], tf.string),
                 'image'    : tf.io.FixedLenFeature([], tf.string),
+                'mask'    : tf.io.FixedLenFeature([], tf.string),
             }
             parsed_features = tf.io.parse_single_example(x, keys_to_features)
             parsed_features['image'] = tf.image.decode_png(parsed_features['image'], channels=3)
+            parsed_features['mask'] = tf.image.decode_png(parsed_features['mask'], channels=1)
             return (
                 parsed_features['name'],
-                parsed_features['cls'],
-                parsed_features['cls_name'],
                 parsed_features['image'],
+                parsed_features['mask'],
             )
         if name == 'test':
             batch_size = 1
@@ -67,14 +64,26 @@ class RecordReader:
         dataset = dataset.repeat(count=count)
         dataset = dataset.prefetch(buffer_size=self._prefatch_buffer_size)
 
-        for name, cls, cls_name, image in iter(dataset):
+        for name, image, mask in iter(dataset):
+
+            flip_cond = tf.random.uniform([], 0, 2, dtype=tf.int32)
+            rot_cond = tf.random.uniform([], 0, 2, dtype=tf.int32)
+
             image = tf.reshape(image, [-1, *self._image_size, 3])
-            image = tf.cond(tf.random.uniform([], 0, 2, dtype=tf.int32),
+            image = tf.cond(flip_cond,
                             true_fn=lambda: tf.image.flip_left_right(image),
                             false_fn=lambda: image)
 
-            image = tf.image.rot90(image, k=tf.random.uniform([], 0, 2, dtype=tf.int32))
+            image = tf.image.rot90(image, k=rot_cond)
             image = tf.cast(image, dtype=tf.float32)
             image = image / 255
 
-            yield name, tf.one_hot(cls, depth=len(classes_decode)), cls_name, image
+            mask = tf.reshape(mask, [-1, *self._image_size, 1])
+            mask = tf.cond(flip_cond,
+                            true_fn=lambda: tf.image.flip_left_right(mask),
+                            false_fn=lambda: mask)
+            mask = tf.image.rot90(mask, k=rot_cond)
+            mask = tf.cast(mask, dtype=tf.float32)
+            mask = mask / 255
+
+            yield name, image, mask
