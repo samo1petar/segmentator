@@ -1,6 +1,6 @@
 import argparse
 from params import Definition, params
-from lib.execution.eval import eval
+# from lib.execution.eval import eval
 from lib.execution.train import train
 
 def run():

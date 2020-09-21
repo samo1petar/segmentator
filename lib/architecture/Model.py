@@ -1,5 +1,6 @@
 import tensorflow as tf
 from lib.feature_extractor.basic_feature_extractor import BasicFE
+from lib.feature_extractor.unet_feature_extractor import UNetFE
 
 
 class Model(tf.keras.Model):
@@ -10,7 +11,7 @@ class Model(tf.keras.Model):
     ):
         super(Model, self).__init__(name=name)
 
-        self.feature_extractor = BasicFE(name='feature_extractor', M=M)
+        self.feature_extractor = UNetFE(name='feature_extractor', M=M)
 
     def call(self, inputs: tf.Tensor, training: bool = False):
 

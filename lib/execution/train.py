@@ -32,7 +32,7 @@ def train(
     file_writer.set_as_default()
     tensorboard = tf.keras.callbacks.TensorBoard(log_dir=logdir)
 
-    @tf.function
+    # @tf.function
     def train_step(input, labels):
         with tf.GradientTape() as tape:
             prediction = model(input, training=True)
@@ -79,8 +79,8 @@ def train(
             time_measurement.reset_states()
 
         ######################  TRAIN STEP ######################
-        name, cls, cls_name, image = iterator_train.__next__()
+        name, image, mask = iterator_train.__next__()
         start = time.time()
-        train_step(image, cls)
+        train_step(image, mask)
         end = time.time()
         time_measurement(end - start)

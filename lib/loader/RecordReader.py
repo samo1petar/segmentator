@@ -67,7 +67,7 @@ class RecordReader:
         for name, image, mask in iter(dataset):
 
             flip_cond = tf.random.uniform([], 0, 2, dtype=tf.int32)
-            rot_cond = tf.random.uniform([], 0, 2, dtype=tf.int32)
+            rot_cond = tf.random.uniform([], 0, 4, dtype=tf.int32)
 
             image = tf.reshape(image, [-1, *self._image_size, 3])
             image = tf.cond(flip_cond,

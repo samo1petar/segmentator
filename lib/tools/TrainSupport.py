@@ -43,25 +43,18 @@ class TrainSupport:
             remove(join(save_dir, x))
 
         count = 0
-        for name, cls, cls_name, image in iterator:
+        for name, image, mask in iterator:
 
             prediction = model(image)
 
             prediction = prediction.numpy()
             name = name.numpy()
-            cls = cls.numpy()
-            cls_name = cls_name.numpy()
             image = image.numpy()
 
-            for x in range(len(cls_name)):
-                count += 1
-                if count > save_count:
-                    return
+            name_ = name.decode('utf8')
 
-                name_ = name[x].decode('utf8')
-                cls_ = cls[x]
+            image_ = image
 
-                prediction_ = softmax(prediction[x])
-                image_ = image[x]
-
-                save_figure(image_, cls_, prediction_, name_, join(save_dir, name_ + '.png'))
+            from IPython import embed
+            embed()
+            exit()
