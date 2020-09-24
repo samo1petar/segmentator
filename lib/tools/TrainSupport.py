@@ -1,4 +1,5 @@
 import cv2
+import numpy as np
 from os import listdir, mkdir, remove
 from os.path import join
 from shutil import copyfile
@@ -6,8 +7,6 @@ import tensorflow as tf
 from typing import Iterator
 from lib.tools.file import mkdir, choose_one_from_dir
 from lib.tools.time import get_time
-from lib.tools.softmax import softmax
-from lib.tools.plot import save_figure
 
 
 class TrainSupport:
@@ -45,16 +44,17 @@ class TrainSupport:
         count = 0
         for name, image, mask in iterator:
 
-            prediction = model(image)
+            count += 1
+            if count > save_count:
+                break
 
-            prediction = prediction.numpy()
-            name = name.numpy()
-            image = image.numpy()
+            prediction_ = model(image).numpy()[0]
+            name_ = name.numpy()[0].decode('utf8')
+            image_ = cv2.cvtColor(image.numpy()[0], cv2.COLOR_BGR2RGB)
+            mask_ = mask.numpy()[0]
 
-            name_ = name.decode('utf8')
+            name_no_ext, ext = name_.rsplit('.', 1)
 
-            image_ = image
-
-            from IPython import embed
-            embed()
-            exit()
+            cv2.imwrite(join(save_dir, name_no_ext.replace('/', '-') + '_image.' + ext), (image_ * 255).astype(np.uint8))
+            cv2.imwrite(join(save_dir, name_no_ext.replace('/', '-') + '_prediction.' + ext), (prediction_ * 255).astype(np.uint8))
+            cv2.imwrite(join(save_dir, name_no_ext.replace('/', '-') + '_mask.' + ext), (mask_ * 255).astype(np.uint8))

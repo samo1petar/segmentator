@@ -7,8 +7,8 @@ from lib.split.split import Split
 
 
 params = {
-    'batch_size'       : 1,
-    'learning_rate'    : 0.0001,
+    'batch_size'       : 4,
+    'learning_rate'    : 0.001,
     'decay_steps'      : 2000,
     'decay_rate'       : 0.9,
     'print_every_iter' : 100,
@@ -33,7 +33,7 @@ class Definition:
     writer = RecordWriter(
         data_path='/media/david/A/Dataset/PlayHippo',
         record_dir='records',
-        record_name='data',
+        record_name='data_smooth',
         train_set=train_set,
         test_set=test_set,
         save_n_test_images=1,
@@ -42,8 +42,8 @@ class Definition:
 
     reader = RecordReader(
         record_dir='records',
-        record_name='data',
-        batch_size=1,
+        record_name='data_smooth',
+        batch_size=params['batch_size'],
         shuffle_buffer=1,
         num_parallel_calls=1,
         num_parallel_reads=1,

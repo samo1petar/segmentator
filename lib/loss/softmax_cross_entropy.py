@@ -9,14 +9,15 @@ class SoftmaxCrossEntropy(tf.keras.losses.Loss):
 
     def call(self, labels: tf.Tensor, prediction: tf.Tensor) -> tf.Tensor:
 
-        from IPython import embed
-        embed()
-
         labels = tf.cast(labels, tf.float16)
         prediction = tf.cast(prediction, tf.float16)
 
-        loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(
-            labels=labels,
-            logits=prediction,
-        ))
+        # loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(
+        #     labels=labels,
+        #     logits=prediction,
+        # ))
+
+        thr = 0.1
+        loss = tf.nn.relu(0.5 * tf.pow(prediction - labels, 2) - 0.5 * thr ** 2)
+
         return loss * self._multiplayer

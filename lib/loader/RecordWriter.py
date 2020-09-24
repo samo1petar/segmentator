@@ -52,6 +52,7 @@ class RecordWriter:
             mask[mask > 25] = 255
             mask[mask <= 25] = 0
             mask = cv2.resize(mask, (self._image_size[1], self._image_size[0]))
+            mask = cv2.GaussianBlur(mask, (0, 0), cv2.BORDER_DEFAULT)
             mask = cv2.imencode('.png', mask)[1].tostring()
 
             yield name, image, mask

@@ -31,11 +31,11 @@ class RecordReader:
 
         self.record_path = os.path.exists(os.path.join(self._record_dir, self._record_name + '.tfrecord'))
 
-    def read_record(self, name: str) -> Generator[tf.Tensor, None, None]:
+    def read_record(self, set_name: str) -> Generator[tf.Tensor, None, None]:
 
-        assert name in ['train', 'test']
+        assert set_name in ['train', 'test']
 
-        full_record_name = os.path.join(self._record_dir, self._record_name + '_' + name + '.tfrecord')
+        full_record_name = os.path.join(self._record_dir, self._record_name + '_' + set_name + '.tfrecord')
 
         def parse(x):
             keys_to_features = {
@@ -51,7 +51,7 @@ class RecordReader:
                 parsed_features['image'],
                 parsed_features['mask'],
             )
-        if name == 'test':
+        if set_name == 'test':
             batch_size = 1
             count = 1
         else:
@@ -68,6 +68,19 @@ class RecordReader:
 
             flip_cond = tf.random.uniform([], 0, 2, dtype=tf.int32)
             rot_cond = tf.random.uniform([], 0, 4, dtype=tf.int32)
+
+            if set_name == 'train':
+
+                image_2 = tf.image.random_brightness(image, 0.2)
+                image_2 = tf.image.random_hue(image_2, 0.2)
+                image_2 = tf.image.random_contrast(image_2, 0.0, 0.3)
+                image_2 = tf.image.random_saturation(image_2, 2, 10)
+
+                image = tf.cond(
+                    tf.random.uniform([], 0, 2, dtype=tf.int32),
+                    true_fn=lambda: image,
+                    false_fn=lambda: image_2,
+                )
 
             image = tf.reshape(image, [-1, *self._image_size, 3])
             image = tf.cond(flip_cond,

@@ -21,7 +21,7 @@ class ConvBnAct(tf.keras.layers.Layer):
         self.activation = Activation(self.activation_name)
 
     def call(self, inputs, training: bool = False):
-        x = self.conv(inputs)
+        x = self.conv(inputs, training=training)
         x = self.batch_norm(x, training=training)
         x = self.activation(x)
         return x

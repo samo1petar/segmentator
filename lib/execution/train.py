@@ -32,16 +32,21 @@ def train(
     file_writer.set_as_default()
     tensorboard = tf.keras.callbacks.TensorBoard(log_dir=logdir)
 
-    # @tf.function
+    @tf.function
     def train_step(input, labels):
         with tf.GradientTape() as tape:
+            tape.watch(model.trainable_variables)
             prediction = model(input, training=True)
             loss = loss_object(labels, prediction)
 
         gradients = tape.gradient(loss, model.trainable_variables)
-        clipped_gradients = []
-        for grad in gradients:
-            clipped_gradients.append(tf.clip_by_value(grad, -clip_gradients, clip_gradients))
+
+        # clipped_gradients = []
+        # for grad in gradients:
+        #     clipped_gradients.append(tf.clip_by_value(grad, -clip_gradients, clip_gradients))
+
+        # from IPython import embed
+        # embed()
 
         optimizer.apply_gradients(zip(gradients, model.trainable_variables))
         train_print_loss(loss)
@@ -65,9 +70,9 @@ def train(
             train_support.sample_from(model, iterator_train, train_support.sample_train_dir)
             train_support.sample_from(model, loader.read_record('test'), train_support.sample_test_dir)
 
-            for name, cls, cls_name, image in loader.read_record('test'):
+            for name, image, mask in loader.read_record('test'):
                 prediction = model(image, training=False)
-                loss = loss_object(cls, prediction)
+                loss = loss_object(mask, prediction)
                 test_loss(loss)
             tf.summary.scalar('test_loss', test_loss.result(), iter)
             test_loss.reset_states()

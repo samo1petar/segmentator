@@ -33,6 +33,8 @@ class UNetFE(tf.keras.layers.Layer):
         self.cu6 = ConvBnAct(8 * M, 3, name='conv_up_6')
         self.dec4 = DeConvBnAct(8, 3, name='deconv_1')
 
+        self.upsample = tf.keras.layers.UpSampling2D()
+
         self.cu_out = Conv(1, 5, name='conv_out')
 
     def call(self, inputs: tf.Tensor, training: bool = False):
@@ -51,17 +53,20 @@ class UNetFE(tf.keras.layers.Layer):
         x = self.cd7(x, training=training)
         x = self.cd8(x, training=training)
 
-        x = self.dec1(x, training=training)
+        # x = self.dec1(x, training=training)
+        x = self.upsample(x)
         x = self.cu1(x, training=training)
         x = self.cu2(x, training=training)
-        x = self.dec2(x, training=training)
+        # x = self.dec2(x, training=training)
+        x = self.upsample(x)
         x = self.cu3(x, training=training)
         x = self.cu4(x, training=training)
-        x = self.dec3(x, training=training)
+        # x = self.dec3(x, training=training)
+        x = self.upsample(x)
         x = self.cu5(x, training=training)
         x = self.cu6(x, training=training)
-        x = self.dec4(x, training=training)
-
+        # x = self.dec4(x, training=training)
+        x = self.upsample(x)
         x = self.cu_out(x, training=training)
 
         return x

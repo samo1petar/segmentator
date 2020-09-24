@@ -17,4 +17,6 @@ class Model(tf.keras.Model):
 
         x = self.feature_extractor(inputs, training=training)
 
+        x = tf.nn.sigmoid(x)
+
         return x
