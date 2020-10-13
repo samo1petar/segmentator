@@ -1,5 +1,6 @@
 records
 results
+results_backup
 venv
 .idea
 __pycache__
