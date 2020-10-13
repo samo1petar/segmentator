@@ -17,6 +17,7 @@ from lib.detection.image import dewarp
 
 
 def get_segmentation_model(results_dir):
+    print ('Choose segmentation model')
     model = SegmentationModel(name='Model', M=1)
     experiment = choose_one_from_dir(results_dir)
     model_dir = os.path.join(experiment, 'model')
@@ -29,6 +30,7 @@ def get_segmentation_model(results_dir):
 
 
 def get_cards_model(results_dir):
+    print ('Choose card classifier model')
     model = CardModel(name='Model', M=1)
     experiment = choose_one_from_dir(results_dir)
     model_dir = os.path.join(experiment, 'model')
@@ -247,6 +249,7 @@ def detect_cards(original_image, verbose=False):
 
 def predict(
         results_dir : str,
+        data_path   : str,
         name        : str,
 ) -> None:
 
@@ -256,7 +259,7 @@ def predict(
     segmentation_model = get_segmentation_model(results_dir)
     cards_model = get_cards_model(results_dir)
 
-    loader = DataLoader(data_path='/media/david/A/Datasets/PlayHippo/images')
+    loader = DataLoader(data_path=data_path)
 
     for x in loader.yield_annotations_from_path(loader.get_data_as_list(shuffle=True)):
         path = x['path']
@@ -319,6 +322,7 @@ def predict(
 
 if __name__ == '__main__':
     predict(
-        results_dir = '/home/david/Projects/Segmentator/results',
+        results_dir = '/home/david/Projects/Segmentator/models',
+        data_path   = '/media/david/A/Datasets/PlayHippo/images',
         name='',
     )
