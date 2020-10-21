@@ -1,4 +1,5 @@
 import cv2
+import json
 import os
 import numpy as np
 import tensorflow as tf
@@ -86,7 +87,6 @@ def predict_card(detection, card_model):
     pred_perc = cls_pred[np.argmax(cls_pred)]
 
     return pred_cls, pred_perc
-
 
 
 def detect_cards(original_image, verbose=False):
@@ -247,6 +247,7 @@ def detect_cards(original_image, verbose=False):
 
     return cards, cards_detections, rotated
 
+
 def predict(
         results_dir : str,
         data_path   : str,
@@ -260,6 +261,8 @@ def predict(
     cards_model = get_cards_model(results_dir)
 
     loader = DataLoader(data_path=data_path)
+
+    detections = {}
 
     for x in loader.yield_annotations_from_path(loader.get_data_as_list(shuffle=True)):
         path = x['path']
@@ -303,10 +306,25 @@ def predict(
 
             # original_image = cv2.circle(original_image, (center_x.astype(np.int32), center_y.astype(np.int32)), 5, 5)
 
-            original_image = cv2.putText(original_image, cls[-1], (center_x.astype(np.int32), center_y.astype(np.int32)), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 1)
+            original_image_copy = original_image.copy()
 
-            original_image = cv2.polylines(original_image, points.reshape(-1, 4, 2), True, (0, 255, 255), 2)
+            original_image_copy = cv2.putText(original_image_copy, cls[-1], (center_x.astype(np.int32), center_y.astype(np.int32)), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 1)
 
+            original_image_copy = cv2.polylines(original_image_copy, points.reshape(-1, 4, 2), True, (0, 255, 255), 2)
+
+            key = show_and_return_key(original_image_copy)
+
+            if key == ord('s'):
+                detections[path.split('/', 7)[-1]] = {
+                    'path': path,
+                    'bbox': points.tolist(),
+                    'class': cls[-1],
+                }
+            elif key == ord('h'):
+                with open('/media/david/A/Datasets/PlayHippo/detections.json', 'w') as f:
+                    json.dump(detections, f)
+
+        continue
         # show(original_image)
 
         play_pad_mask = predict_segmentation(original_image, segmentation_model)
