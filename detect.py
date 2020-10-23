@@ -191,7 +191,7 @@ def detect_cards(original_image, verbose=False):
 
     if len(detections) == 1 and PolyArea(detections[0][:, :, 0].reshape(-1),
                                          detections[0][:, :, 1].reshape(-1)) > 0.8 * (mask.shape[0] * mask.shape[1]):
-        # print ('Rotate')
+        print ('Rotate')
         original_image = cv2.rotate(original_image, cv2.ROTATE_90_CLOCKWISE)
         mask, mask_with_contour, detections = process(original_image, verbose)
 
@@ -262,13 +262,27 @@ def predict(
 
     loader = DataLoader(data_path=data_path)
 
-    detections = {}
+    with open('/media/david/A/Datasets/PlayHippo/detections.json', 'r') as f:
+        detections = json.load(f)
+
+    # detections = {}
+
+    i = 1
+    num_detections = 0
 
     for x in loader.yield_annotations_from_path(loader.get_data_as_list(shuffle=True)):
+
+        print ('i [', i, '/ 3840 ] ' , num_detections, x['path'])
+        i += 1
+
         path = x['path']
         cls = x['cls']
         im_name = x['im_name']
         input_device = x['input_device']
+
+        if path.split('/', 7)[-1] in detections:
+            num_detections += len(detections[path.split('/', 7)[-1]]['class'])
+            continue
 
         # if not 'multiclass' in path:
         #     continue
@@ -280,26 +294,31 @@ def predict(
 
         cards, cards_detections, rotated = detect_cards(original_image)
 
-        if rotated and len(cards) > 0:
-            original_image = cv2.rotate(original_image, cv2.ROTATE_90_CLOCKWISE)
+        # if rotated and len(cards) > 0:
+        #     original_image = cv2.rotate(original_image, cv2.ROTATE_90_CLOCKWISE)
+        #     print ('Image rotated')
 
         cls = []
         for x in range(len(cards)):
             card_cls_1, score_1 = predict_card(cards[x][0], cards_model)
             card_cls_2, score_2 = predict_card(cards[x][1], cards_model)
 
-            print ()
             if score_1 > score_2:
-                print ('Card cls is ', card_cls_1, ' with score ', score_1)
+                # print ('Card cls is ', card_cls_1, ' with score ', score_1)
                 cls.append(card_cls_1)
             else:
-                print('Card cls is ', card_cls_2, ' with score ', score_2)
+                # print('Card cls is ', card_cls_2, ' with score ', score_2)
                 cls.append(card_cls_2)
 
             points = np.array(cards_detections[x]).reshape(4, 2)
             x = points[3].copy()
             points[3] = points[2]
             points[2] = x
+
+            if rotated:
+                points_copy = points.copy()
+                points[:, 0] = points_copy[:, 1]
+                points[:, 1] = original_image.shape[0] - points_copy[:, 0] - 1
 
             center_x = np.sum(points[:, 0]) / 4
             center_y = np.sum(points[:, 1]) / 4
@@ -315,14 +334,33 @@ def predict(
             key = show_and_return_key(original_image_copy)
 
             if key == ord('s'):
-                detections[path.split('/', 7)[-1]] = {
-                    'path': path,
-                    'bbox': points.tolist(),
-                    'class': cls[-1],
-                }
+                det_key = path.split('/', 7)[-1]
+                if det_key not in detections:
+                    detections[det_key] = {
+                        'path' : [path],
+                        'bbox' : [points.tolist()],
+                        'class': [cls[-1]],
+                    }
+                else:
+                    detections[det_key]['bbox'].append(points.tolist())
+                    detections[det_key]['class'].append(cls[-1])
+
+                num_detections += 1
+
+                # for key_path in detections:
+                #     print (detections[key_path]['path'])
+                #     print (detections[key_path]['bbox'])
+                #     print (detections[key_path]['class'])
+
             elif key == ord('h'):
-                with open('/media/david/A/Datasets/PlayHippo/detections.json', 'w') as f:
-                    json.dump(detections, f)
+                with open('/media/david/A/Datasets/PlayHippo/detections2.json', 'w') as f:
+                    json.dump(detections, f, indent=4)
+            elif key == ord('q'):
+                exit()
+
+
+        # from IPython import embed
+        # embed()
 
         continue
         # show(original_image)
