@@ -66,36 +66,36 @@ class RecordReader:
 
         for name, image, mask in iter(dataset):
 
-            flip_cond = tf.random.uniform([], 0, 2, dtype=tf.int32)
-            rot_cond = tf.random.uniform([], 0, 4, dtype=tf.int32)
+            # flip_cond = tf.random.uniform([], 0, 2, dtype=tf.int32)
+            # rot_cond = tf.random.uniform([], 0, 4, dtype=tf.int32)
 
-            if set_name == 'train':
-
-                image_2 = tf.image.random_brightness(image, 0.2)
-                image_2 = tf.image.random_hue(image_2, 0.2)
-                image_2 = tf.image.random_contrast(image_2, 0.0, 0.3)
-                image_2 = tf.image.random_saturation(image_2, 2, 10)
-
-                image = tf.cond(
-                    tf.random.uniform([], 0, 2, dtype=tf.int32),
-                    true_fn=lambda: image,
-                    false_fn=lambda: image_2,
-                )
+            # if set_name == 'train':
+            #
+            #     image_2 = tf.image.random_brightness(image, 0.2)
+            #     image_2 = tf.image.random_hue(image_2, 0.2)
+            #     image_2 = tf.image.random_contrast(image_2, 0.0, 0.3)
+            #     image_2 = tf.image.random_saturation(image_2, 2, 10)
+            #
+            #     image = tf.cond(
+            #         tf.random.uniform([], 0, 2, dtype=tf.int32),
+            #         true_fn=lambda: image,
+            #         false_fn=lambda: image_2,
+            #     )
 
             image = tf.reshape(image, [-1, *self._image_size, 3])
-            image = tf.cond(flip_cond,
-                            true_fn=lambda: tf.image.flip_left_right(image),
-                            false_fn=lambda: image)
+            # image = tf.cond(flip_cond,
+            #                 true_fn=lambda: tf.image.flip_left_right(image),
+            #                 false_fn=lambda: image)
 
-            image = tf.image.rot90(image, k=rot_cond)
+            # image = tf.image.rot90(image, k=rot_cond)
             image = tf.cast(image, dtype=tf.float32)
             image = image / 255
 
             mask = tf.reshape(mask, [-1, *self._image_size, 1])
-            mask = tf.cond(flip_cond,
-                            true_fn=lambda: tf.image.flip_left_right(mask),
-                            false_fn=lambda: mask)
-            mask = tf.image.rot90(mask, k=rot_cond)
+            # mask = tf.cond(flip_cond,
+            #                 true_fn=lambda: tf.image.flip_left_right(mask),
+            #                 false_fn=lambda: mask)
+            # mask = tf.image.rot90(mask, k=rot_cond)
             mask = tf.cast(mask, dtype=tf.float32)
             mask = mask / 255
 
