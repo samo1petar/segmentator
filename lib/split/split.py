@@ -18,14 +18,14 @@ class Split:
         for root, subdir, files in os.walk(self._images_dir):
             for file in files:
                 file_path = os.path.join(root, file)
-                key = '/'.join(file_path.rsplit('/', 3)[1:])
+                key = file_path.rsplit('/', 1)[1]
                 all_images[key] = file_path
 
         all_masks = {}
         for root, subdir, files in os.walk(self._masks_dir):
             for file in files:
                 file_path = os.path.join(root, file)
-                key = '/'.join(file_path.rsplit('/', 3)[1:])
+                key = file_path.rsplit('/', 1)[1]
                 all_masks[key] = file_path
 
         self.data = {key: {'image': all_images[key], 'mask': all_masks[key]} for key in all_masks if key in all_images}
