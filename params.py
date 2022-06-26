@@ -7,48 +7,50 @@ from lib.split.split import Split
 
 
 params = {
-    'batch_size'       : 4,
+    'batch_size'       : 1,
     'learning_rate'    : 0.001,
-    'decay_steps'      : 2000,
+    'decay_steps'      : 1000,
     'decay_rate'       : 0.9,
-    'print_every_iter' : 100,
-    'eval_every_iter'  : 1000,
+    'print_every_iter' : 10,
+    'eval_every_iter'  : 500,
     'max_iter'         : 1000000,
     'clip_gradients'   : 2.0,
-    'results_dir'      : 'results',
-    'name'             : 'first_test',
-    'image_size'       : (512, 512),
+    'results_dir'      : '/home/petar/Projects/Shapes/models',
+    'name'             : 'segmentator_20_images_gray_icenet',
+    'image_size'       : (1024, 1536),
 }
 
 
 class Definition:
 
     split = Split(
-        images_dir='/media/david/A/Datasets/PlayHippo/images',
-        masks_dir='/media/david/A/Datasets/PlayHippo/masked_images_cleaned',
+        images_dir='/home/petar/Projects/Shapes/presentations_png_mmseg 6/images',
+        masks_dir='/home/petar/Projects/Shapes/presentations_png_mmseg 6/labels',
     )
 
     train_set, test_set = split.create_splits()
 
     writer = RecordWriter(
-        data_path='/media/david/A/Dataset/PlayHippo',
-        record_dir='records',
-        record_name='data_smooth',
+        data_path='/home/petar/Projects/Shapes/presentations_png_mmseg 6/',
+        record_dir='/home/petar/Projects/Shapes/records',
+        record_name='segmentator_20_images_gray',
         train_set=train_set,
         test_set=test_set,
         save_n_test_images=1,
         save_n_train_images=1,
+        image_size=params['image_size'],
     )
 
     reader = RecordReader(
-        record_dir='records',
-        record_name='data_smooth',
+        record_dir='/home/petar/Projects/Shapes/records',
+        record_name='segmentator_20_images_gray',
         batch_size=params['batch_size'],
-        shuffle_buffer=1,
-        num_parallel_calls=1,
-        num_parallel_reads=1,
-        prefatch_buffer_size=1,
+        shuffle_buffer=2,
+        num_parallel_calls=2,
+        num_parallel_reads=2,
+        prefatch_buffer_size=5,
         count=-1,
+        image_size=params['image_size'],
     )
 
     model = Model(name='Model', M=1)
