@@ -6,6 +6,7 @@ from lib.layers.ConvBnAct import ConvBnAct
 from lib.layers.FullyConnected import FullyConnected
 from lib.layers.GlobalAvgPool import GlobalAvgPool
 from lib.layers.GlobalMaxPool import GlobalMaxPool
+from lib.layers.IceBlock import IceBlock
 from lib.layers.MaxPool import MaxPool
 
 __all__ = [
@@ -17,5 +18,6 @@ __all__ = [
     'FullyConnected',
     'GlobalAvgPool',
     'GlobalMaxPool',
+    'IceBlock',
     'MaxPool',
 ]

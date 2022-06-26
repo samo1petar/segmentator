@@ -11,31 +11,33 @@ from lib.split.split import Split
 
 
 split = Split(
-        images_dir='/media/david/A/Datasets/PlayHippo/images',
-        masks_dir='/media/david/A/Datasets/PlayHippo/masked_images_cleaned',
+        images_dir='/home/petar/Projects/Shapes/presentations_png_mmseg 6/images',
+        masks_dir='/home/petar/Projects/Shapes/presentations_png_mmseg 6/labels',
     )
 
 train_set, test_set = split.create_splits()
 
 writer = RecordWriter(
-    data_path           = '/media/david/A/Dataset/PlayHippo',
-    record_dir          = 'records',
-    record_name         = 'data',
+    data_path           = '/home/petar/Projects/Shapes/presentations_png_mmseg 6/',
+    record_dir          = '/home/petar/Projects/Shapes/records',
+    record_name         = 'segmentator_20_images_gray',
     train_set           = train_set,
     test_set            = test_set,
-    save_n_test_images  = 1,
-    save_n_train_images = 1,
+    save_n_test_images  = 20,
+    save_n_train_images = 20,
+    image_size          = (1024, 1536),
 )
 
 reader = RecordReader(
-    record_dir           = 'records',
-    record_name          = 'data',
+    record_dir           = '/home/petar/Projects/Shapes/records',
+    record_name          = 'segmentator_20_images_gray',
     batch_size           = 1,
     shuffle_buffer       = 1,
     num_parallel_calls   = 1,
     num_parallel_reads   = 1,
     prefatch_buffer_size = 1,
     count                = 1,
+    image_size           = (1024, 1536),
 )
 
 test_record = reader.read_record('train')
