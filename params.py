@@ -2,22 +2,25 @@ from lib.architecture.Model import Model
 from lib.loader.RecordReader import RecordReader
 from lib.loader.RecordWriter import RecordWriter
 from lib.loss.softmax_cross_entropy import SoftmaxCrossEntropy
+from lib.loss.DiceLoss import DiceLoss
 from lib.optimizer.adam import optimizer_and_learning_rate
 from lib.split.split import Split
+from lib.tools.file import choose_one_from_dir, choose_model
+import os
 
 
 params = {
-    'batch_size'       : 1,
-    'learning_rate'    : 0.001,
-    'decay_steps'      : 1000,
+    'batch_size'       : 8,
+    'learning_rate'    : 0.0001,
+    'decay_steps'      : 5000,
     'decay_rate'       : 0.9,
-    'print_every_iter' : 10,
-    'eval_every_iter'  : 500,
+    'print_every_iter' : 100,
+    'eval_every_iter'  : 2000,
     'max_iter'         : 1000000,
     'clip_gradients'   : 2.0,
     'results_dir'      : '/home/petar/Projects/Shapes/models',
-    'name'             : 'segmentator_20_images_gray_icenet',
-    'image_size'       : (1024, 1536),
+    'name'             : 'segmentator_full_gray_rect_oval_smooth_dice',
+    'image_size'       : (512, 768),
 }
 
 
@@ -33,7 +36,7 @@ class Definition:
     writer = RecordWriter(
         data_path='/home/petar/Projects/Shapes/presentations_png_mmseg 6/',
         record_dir='/home/petar/Projects/Shapes/records',
-        record_name='segmentator_20_images_gray',
+        record_name='segmentator_full_gray_rect_oval_smooth',
         train_set=train_set,
         test_set=test_set,
         save_n_test_images=1,
@@ -43,7 +46,7 @@ class Definition:
 
     reader = RecordReader(
         record_dir='/home/petar/Projects/Shapes/records',
-        record_name='segmentator_20_images_gray',
+        record_name='segmentator_full_gray_rect_oval_smooth',
         batch_size=params['batch_size'],
         shuffle_buffer=2,
         num_parallel_calls=2,
@@ -53,9 +56,14 @@ class Definition:
         image_size=params['image_size'],
     )
 
-    model = Model(name='Model', M=1)
+    model = Model(name='Model', M=2)
 
-    loss = SoftmaxCrossEntropy()
+    # experiment = choose_one_from_dir(params['results_dir'])
+    # model_dir = os.path.join(experiment, 'model')
+    # model_path = choose_model(model_dir)
+    # model.load_weights(model_path)
+
+    loss = DiceLoss()
 
     optimizer = optimizer_and_learning_rate(
         learning_rate = params['learning_rate'],

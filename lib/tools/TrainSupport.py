@@ -37,24 +37,34 @@ class TrainSupport:
         return join(experiment, 'model')
 
     @staticmethod
-    def sample_from(model: tf.keras.Model, iterator : Iterator, save_dir: str, save_count: int = 20):
+    def sample_from(model: tf.keras.Model, iterator : Iterator, save_dir: str, save_count: int = 30):
         for x in listdir(save_dir):
             remove(join(save_dir, x))
 
         count = 0
         for name, image, mask in iterator:
 
-            count += 1
+            prediction = model(image)
+
+            for x in range(name.shape[0]):
+
+                name_ = name.numpy()[x].decode('utf8')
+                image_ = cv2.cvtColor(image.numpy()[x], cv2.COLOR_BGR2RGB)
+                mask_ = mask.numpy()[x]
+                prediction_ = prediction.numpy()[x]
+
+                mask_ = np.concatenate([mask_, np.zeros_like(mask_)[..., 0:1]], axis=-1)
+                prediction_ = np.concatenate([prediction_, np.zeros_like(prediction_)[..., 0:1]], axis=-1)
+
+                name_no_ext, ext = name_.rsplit('.', 1)
+
+                cv2.imwrite(join(save_dir, name_no_ext.replace('/', '-') + '_image.' + ext),
+                            (image_ * 255).astype(np.uint8))
+                cv2.imwrite(join(save_dir, name_no_ext.replace('/', '-') + '_prediction.' + ext),
+                            (prediction_ * 255).astype(np.uint8))
+                cv2.imwrite(join(save_dir, name_no_ext.replace('/', '-') + '_mask.' + ext),
+                            (mask_ * 255).astype(np.uint8))
+
+            count += name.shape[0]
             if count > save_count:
                 break
-
-            prediction_ = model(image).numpy()[0]
-            name_ = name.numpy()[0].decode('utf8')
-            image_ = cv2.cvtColor(image.numpy()[0], cv2.COLOR_BGR2RGB)
-            mask_ = mask.numpy()[0]
-
-            name_no_ext, ext = name_.rsplit('.', 1)
-
-            cv2.imwrite(join(save_dir, name_no_ext.replace('/', '-') + '_image.' + ext), (image_ * 255).astype(np.uint8))
-            cv2.imwrite(join(save_dir, name_no_ext.replace('/', '-') + '_prediction.' + ext), (prediction_ * 255).astype(np.uint8))
-            cv2.imwrite(join(save_dir, name_no_ext.replace('/', '-') + '_mask.' + ext), (mask_ * 255).astype(np.uint8))

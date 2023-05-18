@@ -50,11 +50,44 @@ class RecordWriter:
             image = cv2.imencode('.png', image)[1].tostring()
 
             label = cv2.imread(dataset[key]['mask'], cv2.IMREAD_COLOR)
-            mask = np.zeros_like(label)
-            mask[np.where((label == [0, 0, 128]).all(axis=2))] = [255, 255, 255]
-            mask = mask[:, :, 0]
-            mask = cv2.resize(mask, (self._image_size[1], self._image_size[0]))
+
+            mask_rec = np.zeros_like(label)
+            mask_rec[np.where((label == [0, 0, 128]).all(axis=2))] = [255, 255, 255]
+            mask_rec = mask_rec[:, :, 0]
+            mask_rec = cv2.resize(mask_rec, (self._image_size[1], self._image_size[0]))
+
+            canny_mask_rec = cv2.Canny(mask_rec, 0, 250)
+            blur_rec = cv2.GaussianBlur(canny_mask_rec, (15, 15), 0).astype(np.int32) * 5
+            blur_rec[blur_rec > 255] = 255
+            blur_rec = blur_rec.astype(np.uint8)
+            mask_rec = np.maximum(mask_rec, blur_rec)
+
+            mask_oval = np.zeros_like(label)
+            mask_oval[np.where((label == [0, 128, 0]).all(axis=2))] = [255, 255, 255]
+            mask_oval = mask_oval[:, :, 0]
+            mask_oval = cv2.resize(mask_oval, (self._image_size[1], self._image_size[0]))
+
+            canny_mask_oval = cv2.Canny(mask_oval, 0, 250)
+            blur_oval = cv2.GaussianBlur(canny_mask_oval, (15, 15), 0).astype(np.int32) * 5
+            blur_oval[blur_oval > 255] = 255
+            blur_oval = blur_oval.astype(np.uint8)
+            mask_oval = np.maximum(mask_oval, blur_oval)
+
+            mask = np.stack([mask_rec, mask_oval, np.zeros_like(mask_rec)], axis=-1)
+
             mask = cv2.imencode('.png', mask)[1].tostring()
+
+            # mask = np.zeros_like(label)
+            # mask[np.where((label == [0, 0, 128]).all(axis=2))] = [255, 255, 255]
+            # mask = mask[:, :, 0]
+            # mask = cv2.resize(mask, (self._image_size[1], self._image_size[0]))
+            #
+            # canny_mask = cv2.Canny(mask, 0, 250)
+            # blur = cv2.GaussianBlur(canny_mask, (15, 15), 0).astype(np.int32) * 5
+            # blur[blur > 255] = 255
+            # blur = blur.astype(np.uint8)
+            # mask = np.maximum(mask, blur)
+            # mask = cv2.imencode('.png', mask)[1].tostring()
 
             yield name, image, mask
 

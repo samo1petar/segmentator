@@ -45,7 +45,7 @@ class RecordReader:
             }
             parsed_features = tf.io.parse_single_example(x, keys_to_features)
             parsed_features['image'] = tf.image.decode_png(parsed_features['image'], channels=3)
-            parsed_features['mask'] = tf.image.decode_png(parsed_features['mask'], channels=1)
+            parsed_features['mask'] = tf.image.decode_png(parsed_features['mask'], channels=3)
             return (
                 parsed_features['name'],
                 parsed_features['image'],
@@ -82,7 +82,8 @@ class RecordReader:
             #         false_fn=lambda: image_2,
             #     )
 
-            image = tf.reshape(image, [-1, *self._image_size, 3])
+            # image = tf.reshape(image, [-1, *self._image_size, 3])
+            image = tf.image.resize(image, [*self._image_size])
             # image = tf.cond(flip_cond,
             #                 true_fn=lambda: tf.image.flip_left_right(image),
             #                 false_fn=lambda: image)
@@ -91,7 +92,10 @@ class RecordReader:
             image = tf.cast(image, dtype=tf.float32)
             image = image / 255
 
-            mask = tf.reshape(mask, [-1, *self._image_size, 1])
+            # mask = tf.reshape(mask, [-1, *self._image_size, 1])
+            mask = tf.image.resize(mask, [*self._image_size])
+
+            mask = mask[..., 1:3]
             # mask = tf.cond(flip_cond,
             #                 true_fn=lambda: tf.image.flip_left_right(mask),
             #                 false_fn=lambda: mask)

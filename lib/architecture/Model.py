@@ -12,7 +12,7 @@ class Model(tf.keras.Model):
     ):
         super(Model, self).__init__(name=name)
 
-        self.feature_extractor = IceUNetFE(name='feature_extractor')
+        self.feature_extractor = UNetFE(name='feature_extractor', M=M)
 
     def call(self, inputs: tf.Tensor, training: bool = False):
 
